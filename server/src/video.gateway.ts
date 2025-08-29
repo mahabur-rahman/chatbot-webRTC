@@ -16,24 +16,32 @@ interface JoinRoomPayload {
 
 interface SignalPayload {
   roomCode: string;
-  signal: unknown; // Use a more specific type if possible
+  signal: unknown;
   email: string;
 }
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: '*', // For development; restrict in production
   },
 })
 export class VideoGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
+  // Track which rooms each client is in
+  private clientRooms = new Map<string, string>();
+
   handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
+    const roomCode = this.clientRooms.get(client.id);
+    if (roomCode) {
+      client.to(roomCode).emit('user-left', { id: client.id });
+      this.clientRooms.delete(client.id);
+    }
     console.log(`Client disconnected: ${client.id}`);
   }
 
@@ -43,6 +51,7 @@ export class VideoGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     await client.join(data.roomCode);
+    this.clientRooms.set(client.id, data.roomCode);
     // Notify others in the room about the new user
     client
       .to(data.roomCode)
