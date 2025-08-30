@@ -29,13 +29,11 @@ export class VideoGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  // Track users per room
   private roomUsers = new Map<string, Map<string, string>>(); // roomCode -> Map<clientId, email>
   private clientRooms = new Map<string, string>(); // clientId -> roomCode
 
   handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
-    // You can add more setup logic here if needed
   }
 
   handleDisconnect(client: Socket) {

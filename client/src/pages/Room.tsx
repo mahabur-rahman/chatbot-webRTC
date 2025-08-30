@@ -18,8 +18,9 @@ function Room() {
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnection = useRef<RTCPeerConnection | null>(null);
 
-  // Listen for room users and user leave
   useEffect(() => {
+    socket.emit("join-room", { roomCode, email: myEmail });
+
     socket.on("room-users", (users: string[]) => {
       setRoomUsers(users);
     });
@@ -59,12 +60,11 @@ function Room() {
       }
     });
 
-    // Listen for call request
     socket.on("call-request", (fromEmail: string) => {
       setCallRequest(fromEmail);
+      alert(`${fromEmail} wants to start a video call with you!`);
     });
 
-    // Listen for call accept
     socket.on("call-accept", async () => {
       setCallAccepted(true);
       await startPeerConnection();
@@ -92,7 +92,6 @@ function Room() {
     };
   }, [myEmail, roomCode]);
 
-  // Attach streams to video elements
   useEffect(() => {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
@@ -102,7 +101,6 @@ function Room() {
     }
   }, [stream, remoteStream]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (peerConnection.current) {
@@ -119,15 +117,14 @@ function Room() {
   }, [stream, remoteStream]);
 
   const startPeerConnection = async () => {
+    if (peerConnection.current) return; // Prevent multiple connections
     const pc = new RTCPeerConnection();
     peerConnection.current = pc;
 
-    // Add local tracks
     if (stream) {
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
     }
 
-    // Handle remote stream
     const remoteMediaStream = new MediaStream();
     setRemoteStream(remoteMediaStream);
 
@@ -147,7 +144,6 @@ function Room() {
       }
     };
 
-    // Only the first user creates offer
     const otherEmails = roomUsers.filter((email) => email !== myEmail);
     if (otherEmails.length === 0) {
       const offer = await pc.createOffer();
@@ -158,10 +154,8 @@ function Room() {
         email: myEmail,
       });
     }
-    // Second user waits for offer and responds with answer automatically
   };
 
-  // Send call request
   const handleSendVideo = async () => {
     if (videoStarted) return;
     setVideoStarted(true);
@@ -171,8 +165,10 @@ function Room() {
         audio: true,
       });
       setStream(localStream);
-      // Notify other user
-      socket.emit("call-request", roomUsers.filter((email) => email !== myEmail)[0]);
+      const otherEmails = roomUsers.filter((email) => email !== myEmail);
+      if (otherEmails.length > 0) {
+        socket.emit("call-request", myEmail);
+      }
     } catch (err) {
       alert(
         "ক্যামেরা চালু করা যায়নি: " +
@@ -182,7 +178,6 @@ function Room() {
     }
   };
 
-  // Accept call
   const handleAccept = async () => {
     setCallAccepted(true);
     setCallRequest(null);
@@ -206,25 +201,17 @@ function Room() {
     await startPeerConnection();
   };
 
-  // Cancel call
   const handleCancel = () => {
     setCallRequest(null);
     setVideoStarted(false);
     socket.emit("call-cancel");
   };
 
-  // Find the alternative user's email
   const otherEmails = roomUsers.filter((email) => email !== myEmail);
   const alternativeEmail = otherEmails.length > 0 ? otherEmails[0] : null;
 
   return (
-    <div
-      style={{
-        maxWidth: 400,
-        margin: "100px auto",
-        textAlign: "center",
-      }}
-    >
+    <div style={{ maxWidth: 400, margin: "100px auto", textAlign: "center" }}>
       <h2>Room: {roomCode}</h2>
       {alternativeEmail ? (
         <p>
