@@ -10,4 +10,10 @@ export class PostType {
 
   @Field()
   content: string;
+
+  @Field()
+  createdAt: Date; // Add this
+
+  @Field()
+  updatedAt: Date; // Add this
 }
