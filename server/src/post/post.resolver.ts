@@ -1,20 +1,19 @@
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { PostService } from './post.service';
-
 import { CreatePostDto } from './dto/create-post.dto';
-import { Post } from './entities/post.entity';
+import { PostType } from './types/post.type';
 
-@Resolver(() => Post)
+@Resolver(() => PostType)
 export class PostResolver {
   constructor(private readonly postService: PostService) {}
 
-  @Query(() => [Post])
-  posts(): Promise<Post[]> {
+  @Query(() => [PostType])
+  posts(): Promise<PostType[]> {
     return this.postService.findAll();
   }
 
-  @Mutation(() => Post)
-  createPost(@Args('input') input: CreatePostDto): Promise<Post> {
+  @Mutation(() => PostType)
+  createPost(@Args('input') input: CreatePostDto): Promise<PostType> {
     return this.postService.create(input);
   }
 }
