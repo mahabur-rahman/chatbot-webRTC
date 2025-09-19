@@ -3,7 +3,7 @@ import { ObjectType, Field, ID } from '@nestjs/graphql';
 @ObjectType()
 export class PostType {
   @Field(() => ID)
-  _id: string;
+  id: string; // PostgreSQL UUID
 
   @Field()
   title: string;
@@ -11,9 +11,12 @@ export class PostType {
   @Field()
   content: string;
 
-  @Field()
-  createdAt: Date; // Add this
+  @Field({ nullable: true })
+  banner?: string; // optional if you add banner field
 
   @Field()
-  updatedAt: Date; // Add this
+  createdAt: Date;
+
+  @Field()
+  updatedAt: Date;
 }

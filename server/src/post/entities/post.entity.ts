@@ -1,6 +1,6 @@
 import {
   Entity,
-  ObjectIdColumn,
+  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
@@ -8,11 +8,11 @@ import {
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 
 @ObjectType()
-@Entity()
+@Entity('posts')
 export class Post {
   @Field(() => ID)
-  @ObjectIdColumn()
-  _id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Field()
   @Column()
@@ -22,13 +22,11 @@ export class Post {
   @Column()
   content: string;
 
-  // Automatically set when the document is created
   @Field()
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn({ type: 'timestamp with time zone' })
   createdAt: Date;
 
-  // Automatically updated when the document is updated
   @Field()
-  @UpdateDateColumn({ type: 'timestamp' })
+  @UpdateDateColumn({ type: 'timestamp with time zone' })
   updatedAt: Date;
 }
